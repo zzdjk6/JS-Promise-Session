@@ -13,6 +13,13 @@ presentation:
 ### Thor Chen
 11th Oct 2019
 
+
+<!-- slide -->
+
+## Agenda
+
+TODO:
+
 <!-- slide -->
 
 ## Background: Synchronous

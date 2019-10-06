@@ -37,8 +37,7 @@ console.log('A');
 setTimeout(() => {
     console.log('B');
 }, 0);
-Promise.resolve('C').then(str => console.log(str));
-console.log('D');
+console.log('C');
 ```
 
 <!-- slide -->
@@ -113,13 +112,19 @@ A Promise is an object representing the eventual completion or failure of an asy
 
 ## Use of promise
 
-In our daily development, promises are most likely returned from a built-in method call (such as `fetch`) or 3rd party lib
+* In our daily development, promises are most likely returned from a built-in method call (such as `fetch`) or 3rd party lib
+
+```js
+fetch('http://example.com/movies.json')
+    .then(response => response.json())
+    .then(data => console.log(data));
+```
 
 <!-- slide -->
 
-## Use of promise: Creation
+## Create Promise
 
-* Usually the constructor is used to wrap a callback-style function
+* Usually the constructor of `Promise` is used to wrap a callback-style function
 
 ```js
 const wait = (resolveTime, rejectTime) => {
@@ -136,6 +141,8 @@ wait(2, 3)
 console.log('B');
 ```
 
+<!-- slide vertical=true -->
+
 * There are shorthand functions to create immediately resolved promise:
   * `Promise.resolve()`
   * `Promise.reject()`
@@ -144,7 +151,7 @@ console.log('B');
 
 <!-- slide -->
 
-## Use of Promise: Composition
+## Compose Promise
 
 ```js
 // TODO: Exmaple with setTimeout - promise chain
@@ -170,6 +177,8 @@ Promise.all([func1(), func2(), func3()])
 ```js
 // TODO: Exmple with setTimeout - Promise.race
 ```
+
+<!-- slide vertical=true -->
 
 * Promise only supports very basic composition, if you need more complex data flow, consider using `rxjs`
 
@@ -211,7 +220,7 @@ doFirstThing()
 
 ```js
 // Using promise
-onst makeRequest = () =>
+const makeRequest = () =>
     getJSON()
         .then(data => {
             console.log(data)
@@ -305,70 +314,6 @@ const makeRequest = async () => {
 }
 ```
 
-<!-- slide vertical=true -->
-
-### Error handling
-
-* `try/catch/finally` will not catch errors happen in `promises`, but they can be used in async/await
-
-```js
-const makeRequest = () => {
-  try {
-    getJSON()
-      .then(result => {
-        // this parse may fail, but not be able to catched by the `try/catch`
-        const data = JSON.parse(result)
-        console.log(data)
-      })
-      // uncomment this block to handle asynchronous errors
-      // .catch((err) => {
-      //   console.log(err)
-      // })
-  } catch (err) {
-    console.log(err)
-  }
-```
-
-```js
-const makeRequest = async () => {
-  try {
-    // this parse may fail
-    const data = JSON.parse(await getJSON())
-    console.log(data)
-  } catch (err) {
-    console.log(err)
-  }
-}
-```
-
-<!-- slide -->
-
-## Bonus Point: Event Loop
-
-* The asynchronous behavior of single-thread JavaScript relies on `Event Loop` <small>[[MDN: EventLoop]](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop)</small>
-
-```js
-while (queue.waitForMessage()) {
-  queue.processNextMessage();
-}
-```
-
-* Functions passed to `then()` will be put on `microtask queue` (the end of current loop)
-    * It means the functions will never be called immediately
-    * But they will be called ahead of code in next loop (e.g, functions passed in `setTimeout` will be executed in `task queue`)
-
-https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide
-
-```js
-console.log('A');
-setTimeout(() => {
-    console.log('B');
-}, 0);
-Promise.resolve('C').then(str => console.log(str));
-console.log('D');
-```
-
-
 <!-- slide -->
 
 ## Browser compatibility
@@ -381,14 +326,7 @@ console.log('D');
 
 <!-- slide -->
 
-## Reminder
-
-* JavaScript in browswer runs in a single-thread environment
-    * Heavy processing logic will still block the UI
-    * Try use a multi-thread solution such as `Web Worker`
-
-<!-- slide -->
-
 ## Recap
 
+* TODO:
 * `Promise` is invented to solve "callback hell"

@@ -161,16 +161,49 @@ console.log('B');
 ## Compose Promise
 
 ```js
-// TODO: Exmaple with setTimeout - promise chain
-// TODO: Exmaple with setTimeout - tricky promise chain
+// Chain promise
+const wait = seconds => new Promise(resolve => setTimeout(resolve, seconds * 1000, seconds));
+
+const log = data => console.log(`${parseInt((new Date).getTime()/1000)}`, data);
+
+const createFunc = seconds => () => wait(seconds).then(log);
+
+const func1 = createFunc(1);
+const func2 = createFunc(2);
+const func3 = createFunc(3);
+
+log('start');
+
+func1()
+  .then(func2)
+  .then(func3)
+  .catch(console.error)
+  .then(() => log('finish'));
 ```
 
+<!-- slide vertical=true -->
+
 ```js
-// TODO: Exmple with setTimeout
-Promise.all([func1(), func2(), func3()])
-    .then(([result1, result2, result3]) => { 
-        /* use result1, result2 and result3 */ 
-    });
+// Run promise in parallel
+const wait = seconds => new Promise(resolve => setTimeout(resolve, seconds * 1000, seconds));
+
+const log = data => console.log(`${parseInt((new Date).getTime()/1000)}`, data);
+
+const createFunc = seconds => () => wait(seconds).then(data => {
+  log(data);
+  return data;
+});
+
+const func1 = createFunc(1);
+const func2 = createFunc(2);
+const func3 = createFunc(3);
+
+log('start');
+Promise
+  .all([func1(), func2(), func3()])
+  .then(results => console.log(results))
+  .catch(console.error)
+  .then(() => log('finish'));
 ```
 
 * `Promise.all` will execute all asynchronous functions in parallel and collect their results
@@ -179,15 +212,20 @@ Promise.all([func1(), func2(), func3()])
 
 <!-- slide vertical=true -->
 
-* `Promise.race` to execute all promises in parallel but will end up with the first fullfiled one
+* `Promise.race` to execute all promises in parallel but will end up with the first resolved one
 
 ```js
-// TODO: Exmple with setTimeout - Promise.race
+Promise
+  .race([func1(), func2(), func3()])
+  .then(result => log(result))
+  .catch(console.error)
+  .then(() => log('finish'));
 ```
 
 <!-- slide vertical=true -->
 
 * Promise only supports very basic composition, if you need more complex data flow, consider using `rxjs`
+* Promise does not support `cancel`
 
 
 <!-- slide -->
@@ -195,6 +233,7 @@ Promise.all([func1(), func2(), func3()])
 ## Common mistakes
 
 ```js
+// TODO: use step1, step2, ...
 doFirstThing()
     .then(result1 => {
         doSecondThing(result1)

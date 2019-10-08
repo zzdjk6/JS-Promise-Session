@@ -11,8 +11,8 @@ presentation:
 ## JavaScript Promise
 
 ### Thor Chen
-11th Oct 2019
 
+11th Oct 2019
 
 <!-- slide -->
 
@@ -27,9 +27,9 @@ TODO:
 Code runs line by line (blocking)
 
 ```javascript
-console.log('A');
-console.log('B');
-console.log('C');
+console.log("A");
+console.log("B");
+console.log("C");
 ```
 
 <!-- slide -->
@@ -38,13 +38,12 @@ console.log('C');
 
 Some code runs "in parallel" and we keep going with next lines without waiting for the result
 
-
 ```javascript
-console.log('A');
+console.log("A");
 setTimeout(() => {
-    console.log('B');
+  console.log("B");
 }, 0);
-console.log('C');
+console.log("C");
 ```
 
 <!-- slide -->
@@ -61,7 +60,7 @@ function failureCallback(error) {...}
 doSomethingAsync(params, successCallback, failureCallback);
 ```
 
-* Example with XHR: https://jsfiddle.net/zzdjk6/kn9t46c8/3/
+- Example with XHR: https://jsfiddle.net/zzdjk6/kn9t46c8/3/
 
 <!-- slide data-notes="
 * Every step needs waiting
@@ -73,17 +72,17 @@ doSomethingAsync(params, successCallback, failureCallback);
 ### Think about ordering a pizza
 
 ```javascript
-chooseToppings(function(toppings) {
-    placeOrder(toppings, function(order) {
-        collectOrder(order, function(pizza) {
-            eatPizza(pizza);
+chooseToppings(toppings => {
+  placeOrder(toppings, order => {
+      collectOrder(order, pizza => {
+          eatPizza(pizza);
         }, failureCallback);
     }, failureCallback);
 }, failureCallback);
 ```
 
-* What if you have more steps or more logic (e.g, if/else branches) in each callback?
-    * It will be extremly hard to understand and debug
+- What if you have more steps or more logic (e.g, if/else branches) in each callback?
+  - It will be extremly hard to understand and debug
 
 <!-- slide vertical=true -->
 
@@ -91,16 +90,16 @@ chooseToppings(function(toppings) {
 
 ```js
 chooseToppings()
-    .then(toppings => placeOrder(toppings))
-    .then(order => collectOrder(order))
-    .then(pizza => eatPizza(pizza))
-    .catch(failureCallback);
+  .then(toppings => placeOrder(toppings))
+  .then(order => collectOrder(order))
+  .then(pizza => eatPizza(pizza))
+  .catch(failureCallback);
 ```
 
-* More readable
-  * No "Pyramid"
-  * Only one failureCallback is needed
-  * Chained code for easier reviewing executing order
+- More readable
+  - No "Pyramid"
+  - Only one failureCallback is needed
+  - Chained code for easier reviewing executing order
 
 <!-- slide data-notes="
 * When a promise is created, it is neither in a success or failure state. It is said to be `pending`.
@@ -119,52 +118,145 @@ A Promise is an object representing the eventual completion or failure of an asy
 
 ## Use of promise
 
-* In our daily development, promises are most likely returned from a built-in method call (such as `fetch`) or 3rd party lib
+- In our daily development, promises are most likely returned from a built-in method call (such as `fetch`) or 3rd party lib
 
 ```js
-fetch('http://example.com/movies.json')
-    .then(response => response.json())
-    .then(data => console.log(data));
+fetch("http://example.com/movies.json")
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(console.error);
 ```
+
+<!-- slide vertical=true -->
+
+## `.then`
+
+```js
+// p is a Promise
+p.then(onFulfilled[, onRejected]);
+
+p.then(value => {
+  // fulfillment
+}, reason => {
+  // rejection
+});
+```
+
+- `onRejected` is rarely used, we usually use `.catch` for readability
+
+<!-- slide vertical=true -->
+
+## Promise chain: Part 1
+
+```js
+// p is a Promise
+p.then(result => {
+    const newResult = func1(result);
+    return newResult;
+})
+ .then(result => {
+    const newResult = func2(result);
+    return newResult;
+})
+```
+
+- The `newResult` can be a `value` or `Promise`
+- If you want to nest promise inside `onFulfilled`, make sure to return the `Promise`, otherwise the next `.then` will not wait for its execution
+- Read more on [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/then)
+
+<!-- slide vertical=true -->
+
+## Promise chain: Part 2
+
+What if you forget to return nested `Promise`?
+
+```js
+const wait = seconds =>
+  new Promise(resolve => setTimeout(resolve, seconds * 1000, seconds));
+
+Promise.resolve()
+    .then(() => console.log('start'))
+    .then(() => {
+        wait(2).then(() => console.log('inside'));
+    })
+    .then(() => console.log('finish'));
+```
+
+<!-- slide vertical=true -->
+
+## Javascript tips
+
+These statements are equal
+
+```js
+p.then(result => {
+    const newResult = func(result);
+    return newResult;
+});
+
+p.then(result => func(result));
+
+p.then(func);
+```
+
+<!-- slide vertical=true -->
+
+## `.catch`
+
+```js
+p.catch(onRejected);
+
+p.catch(function(reason) {
+  // rejection
+});
+```
+
+- After `.catch`, the `Promise` becomes a `fullfiled` one, so you can call `.then` afterwards
 
 <!-- slide -->
 
 ## Create Promise
 
-* Usually the constructor of `Promise` is used to wrap a callback-style function
+- Usually the constructor of `Promise` is used to wrap a callback-style function
 
 ```js
 const wait = (resolveTime, rejectTime) => {
-    return new Promise((resolve, reject) => {
-    	setTimeout(resolve, resolveTime * 1000, `resolve in ${resolveTime} seconds`);
-        setTimeout(reject, rejectTime * 1000, `timeout in ${rejectTime} seconds`);
-    });
-}
+  return new Promise((resolve, reject) => {
+    setTimeout(
+      resolve,
+      resolveTime * 1000,
+      `resolve in ${resolveTime} seconds`
+    );
+    setTimeout(reject, rejectTime * 1000, `timeout in ${rejectTime} seconds`);
+  });
+};
 
-console.log('A');
+console.log("A");
 wait(2, 3)
-    .then(result => console.log(result))
-    .catch(error => console.error(error));
-console.log('B');
+  .then(result => console.log(result))
+  .catch(error => console.error(error));
+console.log("B");
 ```
 
 <!-- slide vertical=true -->
 
-* There are shorthand functions to create immediately resolved promise:
-  * `Promise.resolve()`
-  * `Promise.reject()`
-* Complex usage: bridging between native mobile code and JavaScript:
-  * https://medium.com/@zzdjk6/wkwebview-cors-solution-da20ca1194e8
+- There are shorthand functions to create immediately resolved promise:
+  - `Promise.resolve()`
+  - `Promise.reject()`
+- Complex usage: bridging between native mobile code and JavaScript:
+  - https://medium.com/@zzdjk6/wkwebview-cors-solution-da20ca1194e8
 
 <!-- slide -->
 
 ## Compose Promise
 
 ```js
-// Chain promise
-const wait = seconds => new Promise(resolve => setTimeout(resolve, seconds * 1000, seconds));
+// Run promises in series
+const wait = seconds =>
+  new Promise(resolve => setTimeout(resolve, seconds * 1000, seconds));
 
-const log = data => console.log(`${parseInt((new Date).getTime()/1000)}`, data);
+const log = data =>
+  console.log(`${parseInt(new Date().getTime() / 1000)}`, data);
 
 const createFunc = seconds => () => wait(seconds).then(log);
 
@@ -172,61 +264,60 @@ const func1 = createFunc(1);
 const func2 = createFunc(2);
 const func3 = createFunc(3);
 
-log('start');
+log("start");
 
 func1()
   .then(func2)
   .then(func3)
   .catch(console.error)
-  .then(() => log('finish'));
+  .then(() => log("finish"));
 ```
 
 <!-- slide vertical=true -->
 
 ```js
-// Run promise in parallel
-const wait = seconds => new Promise(resolve => setTimeout(resolve, seconds * 1000, seconds));
+// Run promises in parallel
+const wait = seconds =>
+  new Promise(resolve => setTimeout(resolve, seconds * 1000, seconds));
 
-const log = data => console.log(`${parseInt((new Date).getTime()/1000)}`, data);
+const log = data =>
+  console.log(`${parseInt(new Date().getTime() / 1000)}`, data);
 
-const createFunc = seconds => () => wait(seconds).then(data => {
-  log(data);
-  return data;
-});
+const createFunc = seconds => () => wait(seconds).then(log);
 
 const func1 = createFunc(1);
 const func2 = createFunc(2);
 const func3 = createFunc(3);
 
-log('start');
-Promise
-  .all([func1(), func2(), func3()])
+log("start");
+Promise.all([func1(), func2(), func3()])
   .then(results => console.log(results))
   .catch(console.error)
-  .then(() => log('finish'));
+  .then(() => log("finish"));
 ```
 
-* `Promise.all` will execute all asynchronous functions in parallel and collect their results
-* `Promise.all` will be rejected if any of the promise is rejected
-
+- `Promise.all` creates a new `Promise`
+- it will execute all asynchronous functions in parallel and collect their results
+- it will be rejected if any of the promise is rejected
 
 <!-- slide vertical=true -->
 
-* `Promise.race` to execute all promises in parallel but will end up with the first resolved one
+- `Promise.race` creates a new `Promise`
+- It executes all promises in parallel but will end up with the first resolved one
+- Notice: other promises are not terminated
 
 ```js
-Promise
-  .race([func1(), func2(), func3()])
+Promise.race([func1(), func2(), func3()])
   .then(result => log(result))
   .catch(console.error)
-  .then(() => log('finish'));
+  .then(() => log("finish"));
 ```
 
 <!-- slide vertical=true -->
 
-* Promise only supports very basic composition, if you need more complex data flow, consider using `rxjs`
-* Promise does not support `cancel`
+## Personal suggest
 
+- Promise only supports very basic composition, if you need more complex data flow, consider using `rxjs` or other promise libraris (`q`, `bluebird`, etc)
 
 <!-- slide -->
 
@@ -235,18 +326,17 @@ Promise
 ```js
 // TODO: use step1, step2, ...
 doFirstThing()
-    .then(result1 => {
-        doSecondThing(result1)
-            .then(result2 => doThirdThing(result2));
-    })
-    .then(() => doFourthThing());
+  .then(result1 => {
+    doSecondThing(result1).then(result2 => doThirdThing(result2));
+  })
+  .then(() => doFourthThing());
 ```
 
-* Forgot to return promise from inner chain
-    * `doFourthThing` will not wait for `doSecondThing` or `doThirdThing`
-* Unnecessary nesting
-    * Less readable again
-* Forgot to terminate chain with a catch!
+- Forgot to return promise from inner chain
+  - `doFourthThing` will not wait for `doSecondThing` or `doThirdThing`
+- Unnecessary nesting
+  - Less readable again
+- Forgot to terminate chain with a catch!
 
 <!-- slide vertical=true -->
 
@@ -254,10 +344,10 @@ doFirstThing()
 
 ```js
 doFirstThing()
-    .then(result1 => doSecondThing(result1))
-    .then(result2 => doThirdThing(result2))
-    .then(() => doFourthThing())
-    .catch(error => console.error(error));
+  .then(result1 => doSecondThing(result1))
+  .then(result2 => doThirdThing(result2))
+  .then(() => doFourthThing())
+  .catch(error => console.error(error));
 ```
 
 <!-- slide -->
@@ -267,12 +357,12 @@ doFirstThing()
 ```js
 // Using promise
 const makeRequest = () =>
-    getJSON()
-        .then(data => {
-            console.log(data)
-            return "done"
-        })
-        .catch(error => console.error(error));
+  getJSON()
+    .then(data => {
+      console.log(data);
+      return "done";
+    })
+    .catch(error => console.error(error));
 ```
 
 ```js
@@ -294,9 +384,9 @@ const makeRequest = async () => {
 
 ## Why it is better?
 
-* 6 Reasons Why JavaScript Async/Await Blows Promises Away (Tutorial)
-    * Link: https://hackernoon.com/6-reasons-why-javascripts-async-await-blows-promises-away-tutorial-c7ec10518dd9
-    * The "better debugging support" point looks very interesting but I haven't tried yet (TODO: Try it)
+- 6 Reasons Why JavaScript Async/Await Blows Promises Away (Tutorial)
+  - Link: https://hackernoon.com/6-reasons-why-javascripts-async-await-blows-promises-away-tutorial-c7ec10518dd9
+  - The "better debugging support" point looks very interesting but I haven't tried yet (TODO: Try it)
 
 <!-- slide vertical=true -->
 
@@ -304,34 +394,32 @@ const makeRequest = async () => {
 
 ```js
 const makeRequest = () => {
-  return getJSON()
-    .then(data => {
-      if (data.needsAnotherRequest) {
-        return makeAnotherRequest(data)
-          .then(moreData => {
-            console.log(moreData)
-            return moreData
-          })
-      } else {
-        console.log(data)
-        return data
-      }
-    })
-}
+  return getJSON().then(data => {
+    if (data.needsAnotherRequest) {
+      return makeAnotherRequest(data).then(moreData => {
+        console.log(moreData);
+        return moreData;
+      });
+    } else {
+      console.log(data);
+      return data;
+    }
+  });
+};
 ```
 
 ```js
 const makeRequest = async () => {
-  const data = await getJSON()
+  const data = await getJSON();
   if (data.needsAnotherRequest) {
     const moreData = await makeAnotherRequest(data);
-    console.log(moreData)
-    return moreData
+    console.log(moreData);
+    return moreData;
   } else {
-    console.log(data)
-    return data    
+    console.log(data);
+    return data;
   }
-}
+};
 ```
 
 <!-- slide vertical=true -->
@@ -340,39 +428,37 @@ const makeRequest = async () => {
 
 ```js
 const makeRequest = () => {
-  return promise1()
-    .then(value1 => {
+  return promise1().then(value1 => {
+    // do something
+    return promise2(value1).then(value2 => {
       // do something
-      return promise2(value1)
-        .then(value2 => {
-          // do something          
-          return promise3(value1, value2)
-        })
-    })
-}
+      return promise3(value1, value2);
+    });
+  });
+};
 ```
 
 ```js
 const makeRequest = async () => {
-  const value1 = await promise1()
-  const value2 = await promise2(value1)
-  return promise3(value1, value2)
-}
+  const value1 = await promise1();
+  const value2 = await promise2(value1);
+  return promise3(value1, value2);
+};
 ```
 
 <!-- slide -->
 
 ## Browser compatibility
 
-* Promise is not supported natively in IE
-  * We have polyfill
-* Async/Await is introduced in ECMAScript 2017
-    * We have transpilers 😊
-    * Babel / TypeScript alows us to use the latest features of JavaScript without fear!
+- Promise is not supported natively in IE
+  - We have polyfill
+- Async/Await is introduced in ECMAScript 2017
+  - We have transpilers 😊
+  - Babel / TypeScript alows us to use the latest features of JavaScript without fear!
 
 <!-- slide -->
 
 ## Recap
 
-* TODO:
-* `Promise` is invented to solve "callback hell"
+- TODO:
+- `Promise` is invented to solve "callback hell"

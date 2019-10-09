@@ -60,11 +60,12 @@ function failureCallback(error) {...}
 doSomethingAsync(params, successCallback, failureCallback);
 ```
 
-- Example with XHR: https://jsfiddle.net/zzdjk6/kn9t46c8/3/
+- [Example with XHR](https://jsbin.com/hoceluv/2/edit?js,console)
 
 <!-- slide data-notes="
 * Every step needs waiting
 * Every step can fail
+* It will be extremly hard to understand and debug
 " -->
 
 ## The problem: callback hell
@@ -82,7 +83,6 @@ chooseToppings(toppings => {
 ```
 
 - What if you have more steps or more logic (e.g, if/else branches) in each callback?
-  - It will be extremly hard to understand and debug
 
 <!-- slide vertical=true -->
 
@@ -122,14 +122,19 @@ A Promise is an object representing the eventual completion or failure of an asy
 
 ```js
 fetch("http://example.com/movies.json")
-  .then(response => response.json())
-  .then(data => console.log(data))
+  .then(response => {
+    const data = response.json();
+    return data;
+  })
+  .then(data => {
+    console.log(data)
+  })
   .catch(console.error);
 ```
 
 <!-- slide vertical=true -->
 
-## `.then`
+## `.then()`
 
 ```js
 // p is a Promise
@@ -142,11 +147,12 @@ p.then(value => {
 });
 ```
 
-- `onRejected` is rarely used, we usually use `.catch` for readability
+- we pass `onFulfilled` function which takes one argument to `.then`
+- `onRejected` is rarely used explicitly, we usually use `.catch` for readability
 
 <!-- slide vertical=true -->
 
-## Promise chain: Part 1
+## Promise chain
 
 ```js
 // p is a Promise
@@ -161,12 +167,11 @@ p.then(result => {
 ```
 
 - The `newResult` can be a `value` or `Promise`
-- If you want to nest promise inside `onFulfilled`, make sure to return the `Promise`, otherwise the next `.then` will not wait for its execution
-- Read more on [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/then)
+- If you want to nest promise inside `.then()`, make sure to return the `Promise`, otherwise the next `.then()` will not wait for its execution
 
 <!-- slide vertical=true -->
 
-## Promise chain: Part 2
+## Promise chain (continue)
 
 What if you forget to return nested `Promise`?
 
@@ -181,6 +186,7 @@ Promise.resolve()
     })
     .then(() => console.log('finish'));
 ```
+- Read more on [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/then)
 
 <!-- slide vertical=true -->
 
@@ -204,14 +210,22 @@ p.then(func);
 ## `.catch`
 
 ```js
-p.catch(onRejected);
-
-p.catch(function(reason) {
-  // rejection
-});
+// TODO: Demo
 ```
 
-- After `.catch`, the `Promise` becomes a `fullfiled` one, so you can call `.then` afterwards
+- Tip: after `.catch`, the `Promise` becomes a `fullfiled` one, so you can call `.then` afterwards
+
+<!-- slide vertical=true -->
+
+## `.finally`
+
+```js
+// TODO: example
+```
+
+- When the promise is `settled`, i.e either `fulfilled` or `rejected`, the specified callback function is executed
+- This helps to avoid duplicating code in both the promise's `then()` and `catch()` handlers.
+- `return` in `.finally()` callback has no effects, but `throw` does
 
 <!-- slide -->
 
@@ -299,6 +313,7 @@ Promise.all([func1(), func2(), func3()])
 - `Promise.all` creates a new `Promise`
 - it will execute all asynchronous functions in parallel and collect their results
 - it will be rejected if any of the promise is rejected
+- Bonus: try `Promise.allSettled()`
 
 <!-- slide vertical=true -->
 
@@ -317,23 +332,24 @@ Promise.race([func1(), func2(), func3()])
 
 ## Personal suggest
 
-- Promise only supports very basic composition, if you need more complex data flow, consider using `rxjs` or other promise libraris (`q`, `bluebird`, etc)
+- Promise only supports very basic composition
+- if you need more complex data flow, consider using `rxjs` or other promise libraris (`q`, `bluebird`, etc)
 
 <!-- slide -->
 
 ## Common mistakes
 
 ```js
-// TODO: use step1, step2, ...
-doFirstThing()
+step1()
   .then(result1 => {
-    doSecondThing(result1).then(result2 => doThirdThing(result2));
+    step2(result1)
+      .then(result2 => step3(result2));
   })
-  .then(() => doFourthThing());
+  .then(() => step4());
 ```
 
 - Forgot to return promise from inner chain
-  - `doFourthThing` will not wait for `doSecondThing` or `doThirdThing`
+  - `step4` will not wait for `step2` or `step3`
 - Unnecessary nesting
   - Less readable again
 - Forgot to terminate chain with a catch!
@@ -343,11 +359,21 @@ doFirstThing()
 ## Make it correct
 
 ```js
-doFirstThing()
-  .then(result1 => doSecondThing(result1))
-  .then(result2 => doThirdThing(result2))
-  .then(() => doFourthThing())
+step1()
+  .then(result1 => step2(result1))
+  .then(result2 => step3(result2))
+  .then(() => step4())
   .catch(error => console.error(error));
+```
+
+Or even shorter
+
+```js
+step1()
+  .then(step2)
+  .then(step3)
+  .then(step4)
+  .catch(console.error);
 ```
 
 <!-- slide -->
@@ -355,7 +381,7 @@ doFirstThing()
 ## Better syntax: Async/Await
 
 ```js
-// Using promise
+// Using promise syntax
 const makeRequest = () =>
   getJSON()
     .then(data => {
@@ -366,7 +392,7 @@ const makeRequest = () =>
 ```
 
 ```js
-// Using async/await
+// Using async/await syntax
 const makeRequest = async () => {
     try {
         const data = await getJSON();
@@ -428,11 +454,11 @@ const makeRequest = async () => {
 
 ```js
 const makeRequest = () => {
-  return promise1().then(value1 => {
+  return step1().then(value1 => {
     // do something
-    return promise2(value1).then(value2 => {
+    return step2(value1).then(value2 => {
       // do something
-      return promise3(value1, value2);
+      return step3(value1, value2);
     });
   });
 };
@@ -440,9 +466,9 @@ const makeRequest = () => {
 
 ```js
 const makeRequest = async () => {
-  const value1 = await promise1();
-  const value2 = await promise2(value1);
-  return promise3(value1, value2);
+  const value1 = await step1();
+  const value2 = await step2(value1);
+  return step3(value1, value2);
 };
 ```
 
@@ -450,11 +476,16 @@ const makeRequest = async () => {
 
 ## Browser compatibility
 
+### Problems
+
 - Promise is not supported natively in IE
-  - We have polyfill
 - Async/Await is introduced in ECMAScript 2017
-  - We have transpilers 😊
-  - Babel / TypeScript alows us to use the latest features of JavaScript without fear!
+- Some methods are in future ES version (e.g., `.finally`, `.allSettled`)
+
+<!-- slide vertical=true -->
+
+### Solution: transpilers + polyfill 😊
+- Babel / TypeScript alows us to use the latest features of JavaScript without fear!
 
 <!-- slide -->
 

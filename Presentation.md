@@ -62,7 +62,33 @@ function failureCallback(error) {...}
 doSomethingAsync(params, successCallback, failureCallback);
 ```
 
-- [Example with XHR](https://jsbin.com/hoceluv/2/edit?js,console)
+<!-- slide vertical=true -->
+
+Example with XHR
+
+```js
+console.log('A');
+
+const xhr = new XMLHttpRequest();
+
+xhr.open('GET', 'https://redmine.catalyst.net.nz/themes/catalyst/images/logo.png');
+
+xhr.onload = function() {
+  if (xhr.status != 200) {
+    console.error(`Error ${xhr.status}: ${xhr.statusText}`);
+  } else {
+    console.log(`Done, got ${xhr.response.length} bytes`);
+  }
+};
+
+xhr.onerror = function() {
+  console.error("Request failed");
+};
+
+xhr.send();
+
+console.log('B');
+```
 
 <!-- slide data-notes="
 * Every step needs waiting
@@ -87,7 +113,7 @@ chooseToppings(toppings => {
 
 - What if you have more steps or more logic (e.g, if/else branches) in each callback?
 
-<!-- slide vertical=true -->
+<!-- slide -->
 
 ## Promise to rescure
 
@@ -126,8 +152,7 @@ A Promise is an object representing the eventual completion or failure of an asy
 ```js
 fetch("http://example.com/movies.json")
   .then(response => {
-    const data = response.json();
-    return data;
+    return response.json();
   })
   .then(data => {
     console.log(data)
@@ -169,7 +194,7 @@ p.then(result => {
 })
 ```
 
-- The `newResult` can be a `value` or `Promise`
+- The `newResult` can be a `value` or `Promise` (see [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/then) for more details)
 - If you want to nest promise (do something asynchronously) inside `.then()`, make sure to return the `Promise`, otherwise the next `.then()` will not wait for its execution
 
 <!-- slide vertical=true -->
@@ -332,7 +357,7 @@ Promise.race([func1(), func2(), func3()])
 
 <!-- slide vertical=true -->
 
-## Personal suggest
+## Personal advice
 
 - Promise only supports very basic composition
 - if you need more complex data flow, consider using `rxjs` or other promise libraris (`q`, `bluebird`, etc)
@@ -431,12 +456,10 @@ const makeRequest = () => {
       if (data.needsAnotherRequest) {
         return makeAnotherRequest(data)
           .then(moreData => {
-            console.log(moreData);
-            return moreData;
+            console.log(moreData); return moreData;
           });
       } else {
-        console.log(data);
-        return data;
+        console.log(data); return data;
       }
     });
 };
@@ -482,6 +505,86 @@ const makeRequest = async () => {
 
 <!-- slide -->
 
+## Async / Await tips
+
+- `await` can only be used inside `async` functions
+
+```js
+// this will not work on top level
+await Promise.resolve().then(() => console.log(1));
+```
+
+<!-- slide vertical=true -->
+
+- When a function is marked as `async`, it will always return `Promise` (implicit wrapping)
+
+```js
+// They are equal
+const func1 = async () => {
+  return 1;
+}
+const func2 = () => {
+  return Promise.resolve(1);
+}
+console.log(func1());
+console.log(func2());
+```
+
+
+```js
+// They are equal
+const func1 = async () => {
+  throw 1;
+}
+const func2 = () => {
+  return Promise.reject(1);
+}
+console.log(func1());
+console.log(func2());
+```
+
+<!-- slide vertical=true -->
+
+- Take care of the implicit wrapping
+- My suggestion: always use `await`
+
+```js
+const wait = s => new Promise(resolve => setTimeout(resolve, s*1000, s));
+
+const waitThenThrow = async (s) => {
+  await wait(s);
+  throw s;
+} 
+
+const func = async () => {
+  try {
+    // If there is no await?
+    return await waitThenThrow(1);
+  } catch (e) {
+    return null;
+  }
+};
+
+func()
+  .then(console.log)
+  .catch(console.error);
+```
+
+<!-- slide vertical=true -->
+
+- You can always use `async` functions with `Promise.all()|.allSettled()|.race()`
+
+```js
+const func = async (n) => n
+const main = async () => {
+  const results = await Promise.all([func(1), func(2)]);
+  console.log(results);
+}
+main();
+```
+
+<!-- slide -->
+
 ## Browser compatibility
 
 ### Problems
@@ -511,4 +614,10 @@ They alows us to use the latest features of JavaScript without fear!
 
 - `Callback` was the solution for asynchronous code
 - `Promise` is invented to solve "callback hell"
+  - but nesting `Promise` becomes another hell
 - `Async` / `Await` make `Promise` great again :)
+
+
+<!-- slide -->
+
+## Thanks & QA

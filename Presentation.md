@@ -1,7 +1,7 @@
 ---
 presentation:
   width: 1024
-  height: 800
+  height: 900
   theme: solarized.css
   enableSpeakerNotes: true
 ---
@@ -220,7 +220,7 @@ Promise.resolve()
 
 ## Javascript tips
 
-These statements are equal
+These statements are equal when follow functional programming paradiam
 
 ```js
 p.then(result => {
@@ -231,6 +231,48 @@ p.then(result => {
 p.then(result => func(result));
 
 p.then(func);
+```
+
+* Update: but be carefull when the function is bound to an object
+
+## Javascript tips (continue)
+
+```js
+https://jsbin.com/fakiyay/5/edit?js,output
+class C {
+  
+  constructor(str) {
+    this.str = str;
+    this.print3 = this.print3.bind(this);
+  }
+  
+  print1() {
+    console.log(this.str);
+  }
+  
+  print2 = () => {
+    console.log(this.str);
+  }
+  
+  print3() {
+    console.log(this.str);
+  }
+}
+
+const obj = new C('ccc');
+const callFunc = print => {
+  try {
+    console.log(print.name);
+    print();
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+callFunc(obj.print1);
+callFunc(obj.print1.bind(obj));
+callFunc(obj.print2);
+callFunc(obj.print3);
 ```
 
 <!-- slide vertical=true -->
@@ -334,7 +376,7 @@ const log = data => {
   console.log(`${parseInt(new Date().getTime() / 1000)}`, data);
   return data;
 };
-const funcE = wait(2).then(() => Promise.reject('error'));
+const funcE = () => wait(2).then(() => Promise.reject('error'));
 ```
 
 - `Promise.all` creates a new `Promise`
@@ -360,7 +402,7 @@ Promise.race([func1(), func2(), func3()])
 ## Personal advice
 
 - Promise only supports very basic composition
-- if you need more complex data flow, consider using `rxjs` or other promise libraris (`q`, `bluebird`, etc)
+- if you need more complex data flow, consider using [`rxjs`](https://github.com/ReactiveX/rxjs) or other promise libraris ([`q`](https://github.com/kriskowal/q), [`bluebird`](http://bluebirdjs.com/docs/getting-started.html), etc)
 
 <!-- slide -->
 
@@ -408,7 +450,6 @@ step1()
 ## Better syntax: Async/Await
 
 ```js
-// Using promise syntax
 const makeRequest = () =>
   getJSON()
     .then(data => {
@@ -422,7 +463,6 @@ const makeRequest = () =>
 ```
 
 ```js
-// Using async/await syntax
 const makeRequest = async () => {
   try {
     const data = await getJSON();
@@ -464,7 +504,6 @@ const makeRequest = () => {
     });
 };
 ```
-
 ```js
 const makeRequest = async () => {
   const data = await getJSON();
